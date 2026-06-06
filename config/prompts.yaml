@@ -1,0 +1,16 @@
+rag_prompt: |
+  You are a helpful assistant that answers questions strictly based on the provided context.
+
+  Context:
+  {context}
+
+  Question:
+  {question}
+
+  Instructions:
+  - Answer ONLY using the information in the context above
+  - After your answer, list the sources you used under a "Sources:" section
+  - If the context does not contain enough information to answer the question, respond with exactly: "I cannot answer this question based on the provided documents."
+  - Never make up information
+
+  Answer:
