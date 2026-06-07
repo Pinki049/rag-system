@@ -1,0 +1,26 @@
+{
+  "average_score": 1.0,
+  "results": [
+    {
+      "question": "What is retrieval augmented generation?",
+      "answer": "Retrieval-augmented generation (RAG) is a technique that enables large language models (LLMs) to retrieve and incorporate new information from external data sources. With RAG, LLMs first refer to a specified set of documents, then respond to user queries. These documents supplement information from the LLM's pre-existing training data.\n\nSources:\n[1] https://en.wikipedia.org/wiki/Retrieval-augmented_generation\n[2] https://en.wikipedia.org/wiki/Retrieval-augmented_generation\n[3] https://en.wikipedia.org/wiki/Retrieval-augmented_generation\n[4] https://en.wikipedia.org/wiki/Retrieval-augmented_generation\n[5] https://en.wikipedia.org/wiki/Vector_database",
+      "faithful": true,
+      "score": 1.0,
+      "reason": "The answer is a direct quote from the context and accurately represents the concept of Retrieval-Augmented Generation (RAG)."
+    },
+    {
+      "question": "What are the benefits of RAG over fine-tuning?",
+      "answer": "RAG reduces the need to retrain LLMs with new data, saving on computational and financial costs, and allows LLMs to include sources in their responses, providing greater transparency. It also reduces AI hallucinations and improves the accuracy of large language models.\n\nSources:\n[1] https://en.wikipedia.org/wiki/Retrieval-augmented_generation\n[2] https://en.wikipedia.org/wiki/Retrieval-augmented_generation\n[3] https://en.wikipedia.org/wiki/Retrieval-augmented_generation\n[4] https://en.wikipedia.org/wiki/Retrieval-augmented_generation",
+      "faithful": true,
+      "score": 1.0,
+      "reason": "All claims in the answer are directly supported by the context, with no omissions or inaccuracies."
+    },
+    {
+      "question": "How does vector search work in RAG?",
+      "answer": "In RAG, the data to be referenced is converted into LLM embeddings, numerical representations in the form of a large vector space. These embeddings are then stored in a vector database to allow for document retrieval. Various enhancements can improve the way similarities are calculated in the vector stores (databases).\n\nSources:\n[1] https://en.wikipedia.org/wiki/Vector_database\n[2] https://en.wikipedia.org/wiki/Retrieval-augmented_generation\n[3] https://en.wikipedia.org/wiki/Retrieval-augmented_generation\n[4] https://en.wikipedia.org/wiki/Retrieval-augmented_generation\n[5] https://en.wikipedia.org/wiki/Retrieval-augmented_generation",
+      "faithful": true,
+      "score": 1.0,
+      "reason": "The answer accurately summarizes the context, covering the conversion of data to LLM embeddings, storing them in a vector database, and improving similarity calculations."
+    }
+  ]
+}

@@ -18,11 +18,13 @@ def load_markdown(file_path):
     return [{"content": text, "source": str(file_path), "type": "markdown"}]
 
 def load_webpage(url):
-    response = requests.get(url, timeout=10)
+    headers = {"User-Agent": "Mozilla/5.0"}
+    response = requests.get(url, timeout=10, headers=headers)
     soup = BeautifulSoup(response.content, "html.parser")
-    for tag in soup(["script", "style", "nav", "footer"]):
+    for tag in soup(["script", "style", "nav", "footer", "table", "sup"]):
         tag.decompose()
-    text = soup.get_text(separator="\n", strip=True)
+    paragraphs = soup.find_all("p")
+    text = "\n".join([p.get_text(strip=True) for p in paragraphs if len(p.get_text(strip=True)) > 50])
     return [{"content": text, "source": url, "type": "webpage"}]
 
 def load_documents(data_folder="data", urls=[]):
@@ -39,7 +41,7 @@ def load_documents(data_folder="data", urls=[]):
 
 def chunk_documents(documents):
     splitter = RecursiveCharacterTextSplitter(
-        chunk_size=700,
+        chunk_size=500,
         chunk_overlap=100,
         length_function=len,
     )

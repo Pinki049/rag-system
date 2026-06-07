@@ -26,5 +26,9 @@ def ask(question):
     return result
 
 if __name__ == "__main__":
-    ingest(urls=["https://en.wikipedia.org/wiki/Retrieval-augmented_generation"])
+    ingest(urls=[
+        "https://en.wikipedia.org/wiki/Retrieval-augmented_generation",
+        "https://en.wikipedia.org/wiki/Vector_database",
+        "https://en.wikipedia.org/wiki/Fine-tuning_(deep_learning)"
+    ])
     ask("What is retrieval augmented generation?")
