@@ -2,21 +2,13 @@
 
 import { useState, useEffect, useRef } from "react";
 import { Chat, Message, Source } from "@/lib/types";
-import {
-  loadChats,
-  saveChats,
-  createChat,
-  addMessage,
-  updateLastMessage,
-  deleteChat,
-  generateId,
-} from "@/lib/store";
+import { loadChats, saveChats, createChat, addMessage, updateLastMessage, deleteChat, generateId } from "@/lib/store";
 import { streamAnswer, getSources, getDocuments } from "@/lib/api";
 import Sidebar from "@/components/Sidebar";
 import MessageComponent from "@/components/Message";
 import ChatInput from "@/components/ChatInput";
 import DocumentPanel from "@/components/DocumentPanel";
-import { FileText } from "lucide-react";
+import { Menu, FileText } from "lucide-react";
 
 export default function Home() {
   const [chats, setChats] = useState<Chat[]>([]);
@@ -24,24 +16,35 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(false);
   const [showDocuments, setShowDocuments] = useState(false);
   const [documents, setDocuments] = useState<string[]>([]);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-
   const activeChat = chats.find((c) => c.id === activeChatId);
 
   useEffect(() => {
     const stored = loadChats();
+    //console.log("Loaded chats:", stored.length);
     if (stored.length > 0) {
       setChats(stored);
-      setActiveChatId(stored[stored.length - 1].id);
+      //setActiveChatId(stored[stored.length - 1].id);
+      const lastChatWithMessages = stored.slice().reverse().find(c => c.messages.length > 0);
+      setActiveChatId(lastChatWithMessages ? lastChatWithMessages.id : stored[stored.length - 1].id);
     } else {
-      handleNewChat();
+      const newChat = createChat();
+      setChats([newChat]);
+      setActiveChatId(newChat.id);
+      saveChats([newChat]);
     }
+    setMounted(true);
     fetchDocuments();
   }, []);
 
   useEffect(() => {
-    saveChats(chats);
-  }, [chats]);
+    if (mounted && chats.length > 0) {
+      saveChats(chats);
+      //console.log("Saved chats:", chats.length);
+    }
+  }, [chats, mounted]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -66,9 +69,7 @@ export default function Home() {
     setActiveChatId(newChat.id);
   };
 
-  const handleSelectChat = (chatId: string) => {
-    setActiveChatId(chatId);
-  };
+  const handleSelectChat = (chatId: string) => setActiveChatId(chatId);
 
   const handleDeleteChat = (chatId: string) => {
     setChats((prev) => {
@@ -116,7 +117,6 @@ export default function Home() {
     let fullAnswer = "";
 
     try {
-      // Stream the answer
       await streamAnswer(
         question,
         (chunk) => {
@@ -126,7 +126,6 @@ export default function Home() {
           );
         },
         async () => {
-          // When done streaming, fetch sources
           try {
             const sourcesData = await getSources(question);
             const sources: Source[] = sourcesData.sources;
@@ -143,17 +142,25 @@ export default function Home() {
       );
     } catch {
       setChats((prev) =>
-        updateLastMessage(
-          prev,
-          activeChatId,
-          "Sorry, something went wrong. Make sure the backend is running.",
-          [],
-          false
-        )
+        updateLastMessage(prev, activeChatId, "Sorry, something went wrong. Make sure the backend is running.", [], false)
       );
       setIsLoading(false);
     }
   };
+
+  if (!mounted) return (
+    <div style={{
+      height: "100vh",
+      backgroundColor: "var(--background)",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      color: "var(--text-muted)",
+      fontSize: "14px",
+    }}>
+      Loading...
+    </div>
+  );
 
   return (
     <div style={{
@@ -162,7 +169,6 @@ export default function Home() {
       backgroundColor: "var(--background)",
       overflow: "hidden",
     }}>
-      {/* Sidebar */}
       <Sidebar
         chats={chats}
         activeChatId={activeChatId}
@@ -171,107 +177,76 @@ export default function Home() {
         onDeleteChat={handleDeleteChat}
         onOpenDocuments={() => setShowDocuments(true)}
         documentCount={documents.length}
+        isOpen={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
       />
 
-      {/* Main Chat Area */}
-      <div style={{
-        flex: 1,
-        display: "flex",
-        flexDirection: "column",
-        overflow: "hidden",
-      }}>
-        {/* Top Bar */}
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
         <div style={{
-          padding: "16px 24px",
+          padding: "12px 16px",
           borderBottom: "1px solid var(--border)",
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
           backgroundColor: "var(--background)",
         }}>
-          <h1 style={{
-            fontSize: "16px",
-            fontWeight: "600",
-            color: "var(--text-secondary)",
-          }}>
-            {activeChat?.title || "New Chat"}
-          </h1>
-          <div style={{ display: "flex", gap: "8px" }}>
-            <button
-              onClick={() => setShowDocuments(true)}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "6px",
-                padding: "8px 14px",
-                borderRadius: "8px",
-                border: "1px solid var(--border)",
-                backgroundColor: "transparent",
-                color: "var(--text-secondary)",
-                cursor: "pointer",
-                fontSize: "13px",
-                fontWeight: "500",
-              }}
-            >
-              <FileText size={14} />
-              Manage Docs
+          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+            <button onClick={() => setSidebarOpen(true)} style={{
+              background: "none", border: "none", cursor: "pointer",
+              color: "var(--text-muted)", display: "flex", padding: "4px", borderRadius: "6px",
+            }}>
+              <Menu size={20} />
             </button>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <div style={{
+                width: "28px", height: "28px", borderRadius: "7px",
+                backgroundColor: "var(--accent)", display: "flex",
+                alignItems: "center", justifyContent: "center", fontSize: "14px",
+              }}>📄</div>
+              <span style={{ fontWeight: "700", fontSize: "15px" }}>Ask My Doc</span>
+            </div>
           </div>
+          <button
+            onClick={() => setShowDocuments(true)}
+            style={{
+              display: "flex", alignItems: "center", gap: "6px",
+              padding: "7px 12px", borderRadius: "8px",
+              border: "1px solid var(--border)", backgroundColor: "transparent",
+              color: "var(--text-secondary)", cursor: "pointer", fontSize: "13px",
+            }}
+            onMouseEnter={e => (e.currentTarget.style.backgroundColor = "var(--card)")}
+            onMouseLeave={e => (e.currentTarget.style.backgroundColor = "transparent")}
+          >
+            <FileText size={14} />
+            Docs ({documents.length})
+          </button>
         </div>
 
-        {/* Messages */}
-        <div style={{
-          flex: 1,
-          overflowY: "auto",
-          padding: "32px 10%",
-        }}>
+        <div style={{ flex: 1, overflowY: "auto", padding: "32px 10%" }}>
           {!activeChat || activeChat.messages.length === 0 ? (
             <div style={{
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              justifyContent: "center",
-              height: "100%",
-              gap: "16px",
-              color: "var(--text-muted)",
+              display: "flex", flexDirection: "column", alignItems: "center",
+              justifyContent: "center", height: "100%", gap: "16px",
             }}>
               <div style={{
-                width: "64px",
-                height: "64px",
-                borderRadius: "16px",
-                backgroundColor: "var(--card)",
-                border: "1px solid var(--border)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontSize: "28px",
+                width: "64px", height: "64px", borderRadius: "16px",
+                backgroundColor: "var(--card)", border: "1px solid var(--border)",
+                display: "flex", alignItems: "center", justifyContent: "center", fontSize: "28px",
               }}>📄</div>
               <div style={{ textAlign: "center" }}>
-                <h2 style={{
-                  fontSize: "20px",
-                  fontWeight: "700",
-                  color: "var(--text-primary)",
-                  marginBottom: "8px",
-                }}>
+                <h2 style={{ fontSize: "20px", fontWeight: "700", color: "var(--text-primary)", marginBottom: "8px" }}>
                   Ask My Doc
                 </h2>
-                <p style={{ fontSize: "14px", maxWidth: "400px", lineHeight: "1.6" }}>
+                <p style={{ fontSize: "14px", color: "var(--text-muted)", maxWidth: "400px", lineHeight: "1.6" }}>
                   Upload your documents and start asking questions.
-                  Get accurate answers with citations from your sources.
                 </p>
               </div>
               <button
                 onClick={() => setShowDocuments(true)}
                 style={{
-                  padding: "10px 20px",
-                  backgroundColor: "var(--accent)",
-                  color: "white",
-                  border: "none",
-                  borderRadius: "10px",
-                  cursor: "pointer",
-                  fontSize: "14px",
-                  fontWeight: "600",
-                  marginTop: "8px",
+                  padding: "10px 20px", backgroundColor: "var(--accent)", color: "white",
+                  border: "none", borderRadius: "10px", cursor: "pointer",
+                  fontSize: "14px", fontWeight: "600",
                 }}
               >
                 Upload Documents
@@ -287,15 +262,14 @@ export default function Home() {
           )}
         </div>
 
-        {/* Input */}
         <ChatInput
           onSend={handleSend}
           isLoading={isLoading}
-          disabled={documents.length === 0}
+          disabled={false}
+          onDocumentsChange={fetchDocuments}
         />
       </div>
 
-      {/* Document Panel */}
       {showDocuments && (
         <DocumentPanel
           onClose={() => setShowDocuments(false)}

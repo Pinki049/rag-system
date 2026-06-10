@@ -104,13 +104,17 @@ async def ask_question(request: QuestionRequest):
 @app.get("/ask/sources")
 async def get_sources(question: str, k: int = 5):
     chunks = hybrid_retrieve(question, k=k)
+    seen_sources = set()
     sources = []
     for chunk in chunks:
-        sources.append({
-            "content": chunk["content"][:300] + "...",
-            "source": chunk["source"],
-            "type": chunk["type"]
-        })
+        source_key = chunk["source"]
+        if source_key not in seen_sources:
+            seen_sources.add(source_key)
+            sources.append({
+                "content": chunk["content"][:300] + "...",
+                "source": chunk["source"],
+                "type": chunk["type"]
+            })
     return {"question": question, "sources": sources}
 
 @app.get("/evaluate")

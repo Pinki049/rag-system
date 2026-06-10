@@ -41,7 +41,7 @@ export default function MessageComponent({ message }: MessageProps) {
 
       <div style={{
         maxWidth: "85%",
-        padding: "14px 18px",
+        padding: "14px 40px 14px 18px",
         borderRadius: isUser ? "18px 18px 4px 18px" : "18px 18px 18px 4px",
         backgroundColor: isUser ? "var(--user-bubble)" : "var(--assistant-bubble)",
         border: "1px solid var(--border)",
@@ -61,18 +61,19 @@ export default function MessageComponent({ message }: MessageProps) {
           <button
             onClick={handleCopy}
             style={{
-              position: "absolute" as const,
-              top: "10px",
-              right: "10px",
-              background: "none",
-              border: "none",
-              cursor: "pointer",
-              color: "var(--text-muted)",
-              padding: "4px",
-              borderRadius: "4px",
-              display: "flex",
-              alignItems: "center",
-            }}
+          position: "absolute" as const,
+          top: "8px",
+          right: "8px",
+          background: "var(--card)",
+          border: "1px solid var(--border)",
+          cursor: "pointer",
+          color: "var(--text-muted)",
+          padding: "4px 6px",
+          borderRadius: "6px",
+          display: "flex",
+          alignItems: "center",
+          zIndex: 10,
+}}
           >
             {copied ? <Check size={14} color="#22c55e" /> : <Copy size={14} />}
           </button>
@@ -151,7 +152,7 @@ function SourceCard({ source, index }: { source: Source; index: number }) {
           textOverflow: "ellipsis",
           whiteSpace: "nowrap",
         }}>
-          {source.source}
+          {source.source.split(/[\\/]/).pop()}
         </span>
         {isWeb && (
           <a
