@@ -23,10 +23,8 @@ export default function Home() {
 
   useEffect(() => {
     const stored = loadChats();
-    //console.log("Loaded chats:", stored.length);
     if (stored.length > 0) {
       setChats(stored);
-      //setActiveChatId(stored[stored.length - 1].id);
       const lastChatWithMessages = stored.slice().reverse().find(c => c.messages.length > 0);
       setActiveChatId(lastChatWithMessages ? lastChatWithMessages.id : stored[stored.length - 1].id);
     } else {
@@ -42,7 +40,6 @@ export default function Home() {
   useEffect(() => {
     if (mounted && chats.length > 0) {
       saveChats(chats);
-      //console.log("Saved chats:", chats.length);
     }
   }, [chats, mounted]);
 
@@ -182,6 +179,7 @@ export default function Home() {
       />
 
       <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
+        {/* Top Bar */}
         <div style={{
           padding: "12px 16px",
           borderBottom: "1px solid var(--border)",
@@ -189,7 +187,9 @@ export default function Home() {
           alignItems: "center",
           justifyContent: "space-between",
           backgroundColor: "var(--background)",
+          minHeight: "52px",
         }}>
+          {/* Left */}
           <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
             <button onClick={() => setSidebarOpen(true)} style={{
               background: "none", border: "none", cursor: "pointer",
@@ -206,24 +206,29 @@ export default function Home() {
               <span style={{ fontWeight: "700", fontSize: "15px" }}>Ask My Doc</span>
             </div>
           </div>
-          <button
-            onClick={() => setShowDocuments(true)}
-            style={{
-              display: "flex", alignItems: "center", gap: "6px",
-              padding: "7px 12px", borderRadius: "8px",
-              border: "1px solid var(--border)", backgroundColor: "transparent",
-              color: "var(--text-secondary)", cursor: "pointer", fontSize: "13px",
-            }}
-            onMouseEnter={e => (e.currentTarget.style.backgroundColor = "var(--card)")}
-            onMouseLeave={e => (e.currentTarget.style.backgroundColor = "transparent")}
-          >
-            <FileText size={14} />
-            Docs ({documents.length})
-          </button>
-           <UserButton />
+
+          {/* Right */}
+          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <button
+              onClick={() => setShowDocuments(true)}
+              style={{
+                display: "flex", alignItems: "center", gap: "6px",
+                padding: "7px 12px", borderRadius: "8px",
+                border: "1px solid var(--border)", backgroundColor: "transparent",
+                color: "var(--text-secondary)", cursor: "pointer", fontSize: "13px",
+              }}
+              onMouseEnter={e => (e.currentTarget.style.backgroundColor = "var(--card)")}
+              onMouseLeave={e => (e.currentTarget.style.backgroundColor = "transparent")}
+            >
+              <FileText size={14} />
+              Docs ({documents.length})
+            </button>
+            <UserButton />
+          </div>
         </div>
 
-        <div style={{ flex: 1, overflowY: "auto", padding: "32px 10%" }}>
+        {/* Messages */}
+        <div style={{ flex: 1, overflowY: "auto", padding: "25px 20%" }}>
           {!activeChat || activeChat.messages.length === 0 ? (
             <div style={{
               display: "flex", flexDirection: "column", alignItems: "center",

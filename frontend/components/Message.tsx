@@ -82,7 +82,7 @@ export default function MessageComponent({ message }: MessageProps) {
 
       {!isUser && message.sources && message.sources.length > 0 && !message.isStreaming && (
         <div style={{
-          maxWidth: "85%",
+          maxWidth: "90%",
           display: "flex",
           flexDirection: "column",
           gap: "6px",

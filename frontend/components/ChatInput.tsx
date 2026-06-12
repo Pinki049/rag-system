@@ -90,7 +90,7 @@ export default function ChatInput({ onSend, isLoading, disabled, onDocumentsChan
   };
 
   return (
-    <div style={{ padding: "12px 24px 24px", backgroundColor: "var(--background)" }}>
+    <div style={{ padding: "8px 20% 16px", backgroundColor: "var(--background)" }}>
 
       {/* Status message */}
       {message && (
@@ -145,14 +145,15 @@ export default function ChatInput({ onSend, isLoading, disabled, onDocumentsChan
 
       {/* Main input */}
       <div {...getRootProps()} style={{
-        display: "flex",
-        alignItems: "flex-end",
-        gap: "8px",
-        backgroundColor: "var(--input-bg)",
-        border: "1px solid var(--border)",
-        borderRadius: "16px",
-        padding: "10px 12px",
-        position: "relative",
+       display: "flex",
+       alignItems: "flex-end",
+       gap: "8px",
+       backgroundColor: "var(--input-bg)",
+       border: "1px solid var(--border)",
+       borderRadius: "16px",
+       padding: "10px 12px",
+       position: "relative",
+       width: "100%",
       }}>
         <input {...getInputProps()} />
 
