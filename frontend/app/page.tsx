@@ -1,5 +1,5 @@
 "use client";
-
+import { UserButton } from "@clerk/nextjs";
 import { useState, useEffect, useRef } from "react";
 import { Chat, Message, Source } from "@/lib/types";
 import { loadChats, saveChats, createChat, addMessage, updateLastMessage, deleteChat, generateId } from "@/lib/store";
@@ -220,6 +220,7 @@ export default function Home() {
             <FileText size={14} />
             Docs ({documents.length})
           </button>
+           <UserButton />
         </div>
 
         <div style={{ flex: 1, overflowY: "auto", padding: "32px 10%" }}>
