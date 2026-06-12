@@ -2,7 +2,14 @@ from rank_bm25 import BM25Okapi
 from sentence_transformers import CrossEncoder
 from src.embeddings import get_collection
 
-reranker = CrossEncoder("cross-encoder/ms-marco-MiniLM-L-6-v2")
+_reranker = None
+
+def get_reranker():
+    global _reranker
+    if _reranker is None:
+        from sentence_transformers import CrossEncoder
+        _reranker = CrossEncoder("cross-encoder/ms-marco-MiniLM-L-6-v2")
+    return _reranker
 
 def get_all_chunks():
     collection, _ = get_collection()
@@ -52,7 +59,7 @@ def deduplicate(chunks):
 
 def rerank(query, chunks, top_n=5):
     pairs = [[query, chunk["content"]] for chunk in chunks]
-    scores = reranker.predict(pairs)
+    scores = get_reranker().predict(pairs)
     scored_chunks = list(zip(scores, chunks))
     scored_chunks.sort(key=lambda x: x[0], reverse=True)
     top_chunks = [chunk for _, chunk in scored_chunks[:top_n]]
