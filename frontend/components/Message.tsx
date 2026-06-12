@@ -111,18 +111,19 @@ function SourceCard({ source, index }: { source: Source; index: number }) {
   const [expanded, setExpanded] = useState(false);
   const isWeb = source.type === "webpage";
 
-  const handleClick = () => setExpanded(!expanded);
-
   return (
     <div
-      onClick={handleClick}
+      onClick={() => setExpanded(!expanded)}
       style={{
         padding: "10px 14px",
         borderRadius: "10px",
         border: "1px solid var(--border)",
         backgroundColor: "#161616",
         cursor: "pointer",
+        transition: "border-color 0.2s",
       }}
+      onMouseEnter={(e) => (e.currentTarget.style.borderColor = "var(--accent)")}
+      onMouseLeave={(e) => (e.currentTarget.style.borderColor = "var(--border)")}
     >
       <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
         <div style={{
@@ -154,6 +155,14 @@ function SourceCard({ source, index }: { source: Source; index: number }) {
         }}>
           {source.source.split(/[\\/]/).pop()}
         </span>
+        <span style={{
+          fontSize: "11px",
+          color: "var(--accent)",
+          fontWeight: "500",
+          whiteSpace: "nowrap",
+        }}>
+          {expanded ? "Hide excerpt ↑" : "View excerpt ↓"}
+        </span>
         {isWeb && (
           <a
             href={source.source}
@@ -174,7 +183,21 @@ function SourceCard({ source, index }: { source: Source; index: number }) {
           fontSize: "13px",
           color: "var(--text-secondary)",
           lineHeight: "1.6",
+          backgroundColor: "rgba(124,58,237,0.05)",
+          padding: "10px",
+          borderRadius: "6px"
+        
         }}>
+          <div style={{
+            fontSize: "11px",
+            color: "var(--accent)",
+            fontWeight: "600",
+            marginBottom: "6px",
+            textTransform: "uppercase" as const,
+            letterSpacing: "0.05em",
+          }}>
+            Relevant excerpt:
+          </div>
           {source.content}
         </div>
       )}
