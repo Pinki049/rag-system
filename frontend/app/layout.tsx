@@ -15,7 +15,16 @@ export default function RootLayout({
   return (
     <ClerkProvider>
       <html lang="en" suppressHydrationWarning>
-        <body>{children}</body>
+        <body>
+          {children}
+          <script dangerouslySetInnerHTML={{
+            __html: `
+              setInterval(() => {
+                fetch('/api/keepalive').catch(() => {});
+              }, 4 * 60 * 1000);
+            `
+          }} />
+        </body>
       </html>
     </ClerkProvider>
   );
