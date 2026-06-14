@@ -78,17 +78,15 @@ async def ingest_url(request: URLRequest):
 
 @app.get("/documents")
 def list_documents():
-    collection, _ = get_collection()
-    results = collection.get(include=["metadatas"])
-    sources = list(set([m["source"] for m in results["metadatas"]]))
+    from src.embeddings import list_sources
+    sources = list_sources()
     return {"documents": sources, "total": len(sources)}
 
 @app.delete("/documents")
 def delete_all_documents():
-    collection, _ = get_collection()
-    all_ids = collection.get(include=[])["ids"]
-    if all_ids:
-        collection.delete(ids=all_ids)
+    from src.embeddings import get_index
+    index = get_index()
+    index.delete(delete_all=True)
     return {"message": "All documents deleted successfully"}
 
 @app.post("/ask")
