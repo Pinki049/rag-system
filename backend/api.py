@@ -5,8 +5,8 @@ import os
 import shutil
 from pathlib import Path
 from fastapi import FastAPI, UploadFile, File, HTTPException, Request
-from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse, Response
+from starlette.middleware.base import BaseHTTPMiddleware
 from pydantic import BaseModel
 from groq import Groq
 
@@ -17,27 +17,22 @@ from src.generator import build_context, load_prompt
 
 app = FastAPI(title="Ask My Doc API", version="1.0.0")
 
-@app.middleware("http")
-async def add_cors_headers(request: Request, call_next):
-    if request.method == "OPTIONS":
-        response = Response()
+class CORSMiddlewareCustom(BaseHTTPMiddleware):
+    async def dispatch(self, request, call_next):
+        if request.method == "OPTIONS":
+            response = Response()
+            response.headers["Access-Control-Allow-Origin"] = "*"
+            response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
+            response.headers["Access-Control-Allow-Headers"] = "*"
+            response.headers["Access-Control-Max-Age"] = "3600"
+            return response
+        response = await call_next(request)
         response.headers["Access-Control-Allow-Origin"] = "*"
-        response.headers["Access-Control-Allow-Methods"] = "*"
+        response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
         response.headers["Access-Control-Allow-Headers"] = "*"
         return response
-    response = await call_next(request)
-    response.headers["Access-Control-Allow-Origin"] = "*"
-    response.headers["Access-Control-Allow-Methods"] = "*"
-    response.headers["Access-Control-Allow-Headers"] = "*"
-    return response
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=False,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+app.add_middleware(CORSMiddlewareCustom)
 
 client = Groq(api_key=os.environ.get("GROQ_API_KEY"))
 
@@ -59,6 +54,7 @@ async def ingest_file(file: UploadFile = File(...)):
     if suffix not in allowed:
         raise HTTPException(status_code=400, detail=f"File type {suffix} not supported. Use PDF, MD, or TXT.")
     save_path = Path("data") / file.filename
+    os.makedirs("data", exist_ok=True)
     with open(save_path, "wb") as f:
         shutil.copyfileobj(file.file, f)
     documents = load_documents(data_folder="data")
