@@ -50,7 +50,7 @@ export default function Home() {
   const fetchDocuments = async () => {
     try {
       const data = await getDocuments();
-      setDocuments(data.documents);
+      setDocuments(data?.documents || []);
     } catch {
       setDocuments([]);
     }
