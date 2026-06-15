@@ -2,13 +2,15 @@ import os
 from pinecone import Pinecone, ServerlessSpec
 from sentence_transformers import SentenceTransformer
 
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
+
 _model = None
 _index = None
 
 def get_model():
     global _model
     if _model is None:
-        _model = SentenceTransformer("all-MiniLM-L6-v2")
+        _model = SentenceTransformer("all-MiniLM-L6-v2", device="cpu")
     return _model
 
 def get_index():
