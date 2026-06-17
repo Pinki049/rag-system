@@ -1,24 +1,32 @@
 import os
+import requests
 from pinecone import Pinecone, ServerlessSpec
-from sentence_transformers import SentenceTransformer
 
-os.environ["TOKENIZERS_PARALLELISM"] = "false"
-
-_model = None
 _index = None
+HF_API_URL = "https://api-inference.huggingface.co/pipeline/feature-extraction/sentence-transformers/all-MiniLM-L6-v2"
 
-def get_model():
-    global _model
-    if _model is None:
-        _model = SentenceTransformer("all-MiniLM-L6-v2", device="cpu")
-    return _model
+def get_embedding(text):
+    token = os.environ.get("HF_API_TOKEN")
+    headers = {"Authorization": f"Bearer {token}"}
+    response = requests.post(
+        HF_API_URL,
+        headers=headers,
+        json={"inputs": text[:512], "options": {"wait_for_model": True}}
+    )
+    result = response.json()
+    if isinstance(result, list):
+        if isinstance(result[0], list):
+            return result[0]
+        return result
+    return [0.0] * 384
 
 def get_index():
     global _index
     if _index is None:
         pc = Pinecone(api_key=os.environ.get("PINECONE_API_KEY"))
         index_name = "askmydoc"
-        if index_name not in pc.list_indexes().names():
+        existing = pc.list_indexes().names()
+        if index_name not in existing:
             pc.create_index(
                 name=index_name,
                 dimension=384,
@@ -29,11 +37,10 @@ def get_index():
     return _index
 
 def get_collection():
-    return get_index(), get_model()
+    return get_index(), None
 
 def store_chunks(chunks):
     index = get_index()
-    model = get_model()
     existing = index.fetch(ids=[f"{c['source']}_{c['chunk_id']}" for c in chunks])
     existing_ids = set(existing.vectors.keys())
     new_chunks = [c for c in chunks if f"{c['source']}_{c['chunk_id']}" not in existing_ids]
@@ -41,11 +48,11 @@ def store_chunks(chunks):
         print("No new chunks to store — already ingested!")
         return
     vectors = []
-    embeddings = model.encode([c["content"] for c in new_chunks]).tolist()
-    for i, chunk in enumerate(new_chunks):
+    for chunk in new_chunks:
+        embedding = get_embedding(chunk["content"])
         vectors.append({
             "id": f"{chunk['source']}_{chunk['chunk_id']}",
-            "values": embeddings[i],
+            "values": embedding,
             "metadata": {
                 "content": chunk["content"],
                 "source": chunk["source"],
@@ -56,29 +63,16 @@ def store_chunks(chunks):
     index.upsert(vectors=vectors)
     print(f"Stored {len(new_chunks)} new chunks in Pinecone")
 
-def get_all_chunks_from_index():
-    index = get_index()
-    results = index.query(
-        vector=[0.0] * 384,
-        top_k=1000,
-        include_metadata=True
-    )
-    chunks = []
-    for match in results.matches:
-        chunks.append({
-            "content": match.metadata.get("content", ""),
-            "source": match.metadata.get("source", ""),
-            "type": match.metadata.get("type", ""),
-            "chunk_id": match.metadata.get("chunk_id", 0)
-        })
-    return chunks
-
 def list_sources():
-    index = get_index()
-    results = index.query(
-        vector=[0.0] * 384,
-        top_k=1000,
-        include_metadata=True
-    )
-    sources = list(set([m.metadata.get("source", "") for m in results.matches]))
-    return sources
+    try:
+        index = get_index()
+        results = index.query(
+            vector=[0.1] * 384,
+            top_k=100,
+            include_metadata=True
+        )
+        sources = list(set([m.metadata.get("source", "") for m in results.matches if m.metadata]))
+        return sources
+    except Exception as e:
+        print(f"Error: {e}")
+        return []

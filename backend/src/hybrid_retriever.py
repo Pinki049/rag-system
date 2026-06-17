@@ -1,14 +1,5 @@
 from rank_bm25 import BM25Okapi
-from src.embeddings import get_index, get_model, get_all_chunks_from_index
-
-_reranker = None
-
-def get_reranker():
-    global _reranker
-    if _reranker is None:
-        from sentence_transformers import CrossEncoder
-        _reranker = CrossEncoder("cross-encoder/ms-marco-MiniLM-L-6-v2")
-    return _reranker
+from src.embeddings import get_index, get_all_chunks_from_index
 
 def bm25_search(query, chunks, k=10):
     if not chunks:
@@ -21,9 +12,9 @@ def bm25_search(query, chunks, k=10):
     return [chunks[i] for i in top_k_indices]
 
 def vector_search(query, k=10):
+    from src.embeddings import get_embedding, get_index
     index = get_index()
-    model = get_model()
-    query_embedding = model.encode([query]).tolist()[0]
+    query_embedding = get_embedding(query)
     results = index.query(
         vector=query_embedding,
         top_k=k,
@@ -49,18 +40,9 @@ def deduplicate(chunks):
             unique.append(chunk)
     return unique
 
-def rerank(query, chunks, top_n=5):
-    if not chunks:
-        return []
-    pairs = [[query, chunk["content"]] for chunk in chunks]
-    scores = get_reranker().predict(pairs)
-    scored_chunks = list(zip(scores, chunks))
-    scored_chunks.sort(key=lambda x: x[0], reverse=True)
-    return [chunk for _, chunk in scored_chunks[:top_n]]
-
 def hybrid_retrieve(query, k=5):
     all_chunks = get_all_chunks_from_index()
     bm25_results = bm25_search(query, all_chunks, k=10)
     vector_results = vector_search(query, k=10)
     combined = deduplicate(bm25_results + vector_results)
-    return rerank(query, combined, top_n=k)
+    return combined[:k]
