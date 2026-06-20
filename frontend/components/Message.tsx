@@ -80,7 +80,7 @@ export default function MessageComponent({ message }: MessageProps) {
         )}
       </div>
 
-      {!isUser && message.sources && message.sources.length > 0 && !message.isStreaming && (
+      {!isUser && message.sources && message.sources.length > 0 && !message.isStreaming && !message.content.includes("cannot answer") && (
         <div style={{
           maxWidth: "90%",
           display: "flex",
