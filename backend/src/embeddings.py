@@ -1,24 +1,23 @@
 import os
-import requests
+import hashlib
+import json
 from pinecone import Pinecone, ServerlessSpec
 
 _index = None
-HF_API_URL = "https://api-inference.huggingface.co/pipeline/feature-extraction/sentence-transformers/all-MiniLM-L6-v2"
 
-def get_embedding(text):
-    token = os.environ.get("HF_API_TOKEN")
-    headers = {"Authorization": f"Bearer {token}"}
-    response = requests.post(
-        HF_API_URL,
-        headers=headers,
-        json={"inputs": text[:512], "options": {"wait_for_model": True}}
-    )
-    result = response.json()
-    if isinstance(result, list):
-        if isinstance(result[0], list):
-            return result[0]
-        return result
-    return [0.0] * 384
+def simple_embed(text):
+    """Create a simple hash-based embedding - no ML needed"""
+    import hashlib
+    words = text.lower().split()[:100]
+    vector = [0.0] * 384
+    for i, word in enumerate(words):
+        h = int(hashlib.md5(word.encode()).hexdigest(), 16)
+        idx = h % 384
+        vector[idx] += 1.0
+    norm = sum(x**2 for x in vector) ** 0.5
+    if norm > 0:
+        vector = [x/norm for x in vector]
+    return vector
 
 def get_index():
     global _index
@@ -35,6 +34,9 @@ def get_index():
             )
         _index = pc.Index(index_name)
     return _index
+
+def get_embedding(text):
+    return simple_embed(text)
 
 def get_collection():
     return get_index(), None
@@ -75,4 +77,24 @@ def list_sources():
         return sources
     except Exception as e:
         print(f"Error: {e}")
+        return []
+
+def get_all_chunks_from_index():
+    try:
+        index = get_index()
+        results = index.query(
+            vector=[0.1] * 384,
+            top_k=1000,
+            include_metadata=True
+        )
+        chunks = []
+        for match in results.matches:
+            chunks.append({
+                "content": match.metadata.get("content", ""),
+                "source": match.metadata.get("source", ""),
+                "type": match.metadata.get("type", ""),
+                "chunk_id": match.metadata.get("chunk_id", 0)
+            })
+        return chunks
+    except:
         return []
