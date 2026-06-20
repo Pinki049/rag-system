@@ -57,7 +57,14 @@ async def ingest_file(file: UploadFile = File(...)):
     os.makedirs("data", exist_ok=True)
     with open(save_path, "wb") as f:
         shutil.copyfileobj(file.file, f)
-    documents = load_documents(data_folder="data")
+
+    if suffix == ".pdf":
+        from src.ingestion import load_pdf
+        documents = load_pdf(save_path)
+    else:
+        from src.ingestion import load_markdown
+        documents = load_markdown(save_path)
+
     chunks = chunk_documents(documents)
     store_chunks(chunks)
     return {"message": f"Successfully ingested {file.filename}", "chunks_created": len(chunks)}
