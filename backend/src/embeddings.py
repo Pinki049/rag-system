@@ -1,16 +1,15 @@
 import os
+import requests
 import hashlib
-import json
 from pinecone import Pinecone, ServerlessSpec
 
 _index = None
+HF_API_URL = "https://api-inference.huggingface.co/pipeline/feature-extraction/sentence-transformers/all-MiniLM-L6-v2"
 
 def simple_embed(text):
-    """Create a simple hash-based embedding - no ML needed"""
-    import hashlib
     words = text.lower().split()[:100]
     vector = [0.0] * 384
-    for i, word in enumerate(words):
+    for word in words:
         h = int(hashlib.md5(word.encode()).hexdigest(), 16)
         idx = h % 384
         vector[idx] += 1.0
@@ -18,6 +17,31 @@ def simple_embed(text):
     if norm > 0:
         vector = [x/norm for x in vector]
     return vector
+
+def get_embedding(text):
+    token = os.environ.get("HF_API_TOKEN")
+    if not token:
+        return simple_embed(text)
+    headers = {"Authorization": f"Bearer {token}"}
+    try:
+        response = requests.post(
+            HF_API_URL,
+            headers=headers,
+            json={"inputs": text[:512], "options": {"wait_for_model": True}},
+            timeout=30
+        )
+        result = response.json()
+        print(f"HF API response type: {type(result)}, sample: {str(result)[:200]}")
+        if isinstance(result, list) and len(result) > 0:
+            if isinstance(result[0], list):
+                return result[0]
+            elif isinstance(result[0], (int, float)):
+                return result
+        print(f"Unexpected HF response format: {result}")
+        return simple_embed(text)
+    except Exception as e:
+        print(f"HF API error: {e}, falling back to hash embed")
+        return simple_embed(text)
 
 def get_index():
     global _index
@@ -34,9 +58,6 @@ def get_index():
             )
         _index = pc.Index(index_name)
     return _index
-
-def get_embedding(text):
-    return simple_embed(text)
 
 def get_collection():
     return get_index(), None
